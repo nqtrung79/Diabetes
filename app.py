@@ -25,7 +25,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # --- 3. DATABASE CONNECTION ---
-MONGO_URI = "mongodb+srv://nqtrung79_db_user:3fEes8fqxU67cTD4@foodata.yalh6q4.mongodb.net/?appName=Foodata"
+MONGO_URI = st.secrets["MONGO_URI"]
 client = MongoClient(MONGO_URI)
 db = client["USDA_Healthy_Food"]
 # Collection mới cho bài viết
@@ -57,7 +57,7 @@ def get_raw_nutrients(fdc_id):
 
 
 # --- 6. MAIN INTERFACE ---
-st.title("🛡️ Research Factory: Diabetes Analysis")
+st.title("🛡️ Decoding Food, Defeating Diabetes")
 
 tab_explorer, tab_recommend, tab_about = st.tabs([
     "🍏 USDA Food Intelligence",
@@ -169,11 +169,16 @@ with tab_recommend:
         grid_cols = st.columns(3)
         for idx, art in enumerate(articles):
             with grid_cols[idx % 3]:
-                st.image(art.get('image', 'https://via.placeholder.com/300x200'), use_container_width=True)
-                st.subheader(art['title'])
-                st.caption(f"📁 {art['category']} | 📅 {art['date'].strftime('%Y-%m-%d')}")
-                if st.button("Read Full Analysis", key=f"read_{art['_id']}"):
-                    st.session_state.selected_article_id = art['_id']
+                # Tương tự cho phần hiển thị chi tiết
+                detail_img = selected_doc.get('image', '').strip()
+
+                if not detail_img.startswith("http"):
+                    detail_img = "https://via.placeholder.com/300x200?text=No+Image"
+
+                try:
+                    st.image(detail_img, use_container_width=True)
+                except Exception:
+                    st.error("Lỗi hiển thị hình ảnh chi tiết.")
 
     # C. Article Detail View & Anti-Spam Comments
     if 'selected_article_id' in st.session_state:

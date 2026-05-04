@@ -4,7 +4,7 @@ from datetime import datetime
 import time
 
 # --- KẾT NỐI MONGODB ---
-MONGO_URI = "mongodb+srv://nqtrung79_db_user:3fEes8fqxU67cTD4@foodata.yalh6q4.mongodb.net/?appName=Foodata"
+MONGO_URI = st.secrets["MONGO_URI"]
 client = MongoClient(MONGO_URI)
 db = client['Foodata']
 articles_col = db['food_articles']
@@ -61,7 +61,18 @@ def elite_foods_lab():
     cols = st.columns(3)
     for idx, doc in enumerate(articles):
         with cols[idx % 3]:
-            st.image(doc.get('image', 'https://via.placeholder.com/150'), use_container_width=True)
+            # Lấy link ảnh và làm sạch chuỗi
+            img_url = doc.get('image', '').strip()
+
+            # Kiểm tra điều kiện link hợp lệ
+            if not img_url.startswith("http"):
+                img_url = "https://via.placeholder.com/300x200?text=No+Image+URL"
+
+            try:
+                st.image(img_url, use_container_width=True)
+            except Exception:
+                st.image("https://via.placeholder.com/300x200?text=Image+Load+Error", use_container_width=True)
+
             st.subheader(doc['title'])
             st.caption(f"Category: {doc['category']}")
 
