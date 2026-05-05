@@ -31,6 +31,9 @@ db = client["USDA_Healthy_Food"]
 # Collection mới cho bài viết
 articles_col = db['food_articles']
 
+st.markdown(
+    "<div style='text-align:center; color:gray; margin-top:50px;'>© Data source: USDA's Food Composition'</div>",
+    unsafe_allow_html=True)
 
 # --- 4. ANTI-SPAM LOGIC ---
 def is_spam(comment_text):
