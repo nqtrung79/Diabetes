@@ -2,31 +2,35 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from pymongo import MongoClient
-import recipe_service as rs  # Giữ nguyên service của anh
+import recipe_service as rs
 from datetime import datetime
 import time
 
-# --- 1. CẤU HÌNH TRANG ---
+# --- 1. PAGE CONFIG ---
 st.set_page_config(page_title="Diabetes Research Factory", layout="wide")
 
-# --- 2. TỪ ĐIỂN ĐA NGÔN NGỮ ---
+# --- 2. TỪ ĐIỂN ĐA NGÔN NGỮ (DICTIONARY) ---
 LANGUAGES = {
     "Tiếng Việt": {
         "title": "🛡️ Giải mã Thực phẩm, Đẩy lùi Tiểu đường",
         "tab1": "🍏 Trí tuệ Thực phẩm USDA",
-        "tab2": "🛡️ Phòng thí nghiệm Elite",
+        "tab2": "🛡️ Elite Foods Lab",
         "tab3": "📄 Về dự án",
-        "search_label": "🔍 Tìm tên thực phẩm (VD: Yến mạch, Bông cải)",
+        "search_label": "🔍 Tìm tên thực phẩm (VD: Yến mạch, Bông cải, Cá hồi)",
+        "prev": "⬅️ Trang trước",
+        "next": "Trang sau ➡️",
+        "score_label": "Điểm sức khỏe Tiểu đường",
+        "nut_title": "📊 Thành phần dinh dưỡng đầy đủ (Chuẩn USDA trên 100g)",
+        "ai_title": "💡 Lời khuyên từ Chuyên gia AI",
+        "scientific_summary": "🔬 Tóm tắt Khoa học",
+        "dietary_guidance": "🌿 Hướng dẫn Chế độ ăn",
         "admin_title": "🛠️ Quản lý nội dung (Admin)",
-        "food_name": "Tên thực phẩm",
-        "category": "Nhóm",
         "publish_btn": "Xuất bản bài viết",
         "read_more": "Xem chi tiết",
         "discussion": "💬 Thảo luận",
         "comment_btn": "Gửi bình luận",
-        "prev": "⬅️ Trang trước",
-        "next": "Trang sau ➡️",
-        "advice_title": "💡 Lời khuyên chuyên gia AI",
+        "name_label": "Tên của bạn",
+        "msg_label": "Ý kiến của bạn",
         "source": "© Nguồn dữ liệu: Thành phần thực phẩm của USDA"
     },
     "English": {
@@ -34,75 +38,80 @@ LANGUAGES = {
         "tab1": "🍏 USDA Food Intelligence",
         "tab2": "🛡️ Elite Foods Lab",
         "tab3": "📄 About Project",
-        "search_label": "🔍 Search food name (e.g., Oats, Broccoli)",
+        "search_label": "🔍 Search food name (e.g., Oats, Broccoli, Salmon)",
+        "prev": "⬅️ Previous Page",
+        "next": "Next Page ➡️",
+        "score_label": "Diabetes Health Score",
+        "nut_title": "📊 Full Nutrient Composition (USDA Standard per 100g)",
+        "ai_title": "💡 AI Virtual Expert Advice",
+        "scientific_summary": "🔬 Scientific Summary",
+        "dietary_guidance": "🌿 Dietary Guidance",
         "admin_title": "🛠️ Content Management (Admin)",
-        "food_name": "Food Name",
-        "category": "Category",
         "publish_btn": "Publish Article",
         "read_more": "Read Details",
         "discussion": "💬 Discussion",
         "comment_btn": "Post Comment",
-        "prev": "⬅️ Previous Page",
-        "next": "Next Page ➡️",
-        "advice_title": "💡 AI Virtual Expert Advice",
+        "name_label": "Your Name",
+        "msg_label": "Add to discussion",
         "source": "© Data source: USDA's Food Composition"
     }
 }
 
-# --- 3. KẾT NỐI DATABASE ---
+# --- 3. CUSTOM CSS (Giữ nguyên thuật toán hiển thị của anh) ---
+st.markdown("""
+<style>
+.nutrient-card { background-color: #f8f9fa; border-radius: 10px; padding: 15px; border: 1px solid #dee2e6; text-align: center; margin-bottom: 10px; min-height: 100px; }
+.nutrient-value { font-size: 18px; font-weight: bold; color: #2e7d32; }
+.nutrient-name { font-size: 13px; color: #616161; }
+.score-container { padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; border: 2px solid #ddd; color: white; }
+.ai-box { background-color: #f0f7ff; padding: 20px; border-radius: 12px; border-left: 6px solid #007bff; color: #0d47a1; line-height: 1.6; }
+.article-card { border: 1px solid #eee; padding: 15px; border-radius: 10px; background: white; transition: 0.3s; }
+</style>
+""", unsafe_allow_html=True)
+
+# --- 4. DATABASE & SESSION STATE ---
 MONGO_URI = st.secrets["MONGO_URI"]
 client = MongoClient(MONGO_URI)
 db = client["USDA_Healthy_Food"]
 articles_col = db['food_articles']
 
-# --- 4. SIDEBAR & CHỌN NGÔN NGỮ ---
-if 'lang' not in st.session_state:
-    st.session_state.lang = "Tiếng Việt"
-
-with st.sidebar:
-    st.title("🌐 Language / Ngôn ngữ")
-    col_vn, col_us = st.columns(2)
-    if col_vn.button("🇻🇳 Tiếng Việt", use_container_width=True):
-        st.session_state.lang = "Tiếng Việt"
-        st.rerun()
-    if col_us.button("🇺🇸 English", use_container_width=True):
-        st.session_state.lang = "English"
-        st.rerun()
-
-    st.divider()
-    st.info(f"Đang dùng: {st.session_state.lang}")
-
+if 'lang' not in st.session_state: st.session_state.lang = "Tiếng Việt"
 L = LANGUAGES[st.session_state.lang]
 
 
-# --- 5. LOGIC BỔ TRỢ (Spam, Nutrients) ---
+# --- 5. LOGIC THUẬT TOÁN (ANTI-SPAM & FETCHING) ---
 def is_spam(text):
-    bad_words = ['http', 'www', 'cờ bạc', 'quảng cáo', 'mua hàng']
-    return any(w in text.lower() for w in bad_words) or len(text) < 3
+    bad_words = ['http', 'https', 'www', 'buy now', 'cờ bạc', 'quảng cáo']
+    return any(word in text.lower() for word in bad_words) or len(text) < 3
 
 
 @st.cache_data
 def get_raw_nutrients(fdc_id):
-    pipeline = [
-        {"$match": {"fdc_id": int(fdc_id)}},
-        {"$lookup": {"from": "Nutrient_Definitions", "localField": "nutrient_id", "foreignField": "id",
-                     "as": "details"}},
-        {"$unwind": "$details"}
-    ]
+    pipeline = [{"$match": {"fdc_id": int(fdc_id)}}, {
+        "$lookup": {"from": "Nutrient_Definitions", "localField": "nutrient_id", "foreignField": "id",
+                    "as": "details"}}, {"$unwind": "$details"}]
     results = list(db.Core_Nutrients.aggregate(pipeline))
     return pd.DataFrame(
         [{"Nutrient": r['details']['name'], "Amount": r['amount'], "Unit": r['details']['unit_name']} for r in results])
 
 
-# --- 6. GIAO DIỆN CHÍNH ---
+# --- 6. SIDEBAR VỚI LÁ CỜ ---
+with st.sidebar:
+    st.title("🌐 Language")
+    c1, c2 = st.columns(2)
+    if c1.button("🇻🇳 Tiếng Việt"): st.session_state.lang = "Tiếng Việt"; st.rerun()
+    if c2.button("🇺🇸 English"): st.session_state.lang = "English"; st.rerun()
+    st.divider()
+    st.info(f"Phần mềm Nghiên cứu: {st.session_state.lang}")
+
+# --- 7. MAIN INTERFACE ---
 st.title(L["title"])
 
 tab_explorer, tab_recommend, tab_about = st.tabs([L["tab1"], L["tab2"], L["tab3"]])
 
-# --- TAB 1: USDA EXPLORER ---
+# --- TAB 1: EXPLORER (THUẬT TOÁN TÍNH TOÁN & HIỂN THỊ) ---
 with tab_explorer:
     search_input = st.text_input(L["search_label"], key="usda_search")
-
     if 'page' not in st.session_state: st.session_state.page = 1
     skip = (st.session_state.page - 1) * 10
 
@@ -114,69 +123,101 @@ with tab_explorer:
         event = st.dataframe(df_view, use_container_width=True, on_select="rerun", selection_mode="single-row",
                              hide_index=True)
 
-        c_p, _, c_n = st.columns([1, 2, 1])
-        if c_p.button(L["prev"]): st.session_state.page = max(1, st.session_state.page - 1)
-        if c_n.button(L["next"]): st.session_state.page += 1
+        # Phân trang
+        cp1, cp2, cp3 = st.columns([1, 2, 1])
+        if cp1.button(L["prev"]): st.session_state.page = max(1, st.session_state.page - 1)
+        if cp3.button(L["next"]): st.session_state.page += 1
 
         if len(event.selection.rows) > 0:
             selected_food = scored_data[event.selection.rows[0]]
-            # ... (Phần vẽ biểu đồ và hiển thị Rank/Score giữ nguyên như code cũ của anh)
-            st.success(f"Selected: {selected_food['description']}")
+            # Thuật toán màu sắc theo Rank
+            color_map = {1: "#1b5e20", 2: "#2e7d32", 3: "#f9a825", 4: "#ef6c00", 5: "#c62828", 6: "#8e0000"}
+            bg_color = color_map.get(selected_food['rank'], "#757575")
 
-# --- TAB 2: ELITE FOODS LAB (MongoDB Integrated) ---
+            st.markdown(f'<div class="score-container" style="background-color: {bg_color};">'
+                        f'<h1 style="font-size: 70px; margin:0;">{selected_food["icon"]}</h1>'
+                        f'<h2>{selected_food["status"]}</h2>'
+                        f'<h3>{L["score_label"]}: {selected_food["score"]}/100</h3></div>', unsafe_allow_html=True)
+
+            # Thẻ dinh dưỡng (Nutrient Cards)
+            nut_df = get_raw_nutrients(selected_food['fdc_id'])
+            st.subheader(L["nut_title"])
+            n_cols = st.columns(5)
+            for idx, row in nut_df.iterrows():
+                with n_cols[idx % 5]:
+                    st.markdown(f'<div class="nutrient-card"><div class="nutrient-name">{row["Nutrient"]}</div>'
+                                f'<div class="nutrient-value">{round(row["Amount"], 2)} <small>{row["Unit"]}</small></div></div>',
+                                unsafe_allow_html=True)
+
+            # Thuật toán tư vấn AI
+            advices = {
+                1: "Excellent choice! Ideal for blood sugar management." if st.session_state.lang == "English" else "Lựa chọn tuyệt vời! Lý tưởng để quản lý đường huyết.",
+                2: "Safe for consumption." if st.session_state.lang == "English" else "An toàn để sử dụng thường xuyên.",
+                3: "Acceptable in moderation." if st.session_state.lang == "English" else "Chấp nhận được nếu dùng điều độ.",
+                4: "Exercise caution." if st.session_state.lang == "English" else "Cần thận trọng, có thể gây tăng đường huyết nhẹ.",
+                5: "Not recommended." if st.session_state.lang == "English" else "Không khuyến khích sử dụng.",
+                6: "Danger Zone!" if st.session_state.lang == "English" else "Vùng nguy hiểm! Nguy cơ tăng vọt đường huyết."
+            }
+
+            st.markdown(f'<div class="ai-box"><b>{L["scientific_summary"]}:</b> {selected_food["status"]}.<br>'
+                        f'<b>{L["dietary_guidance"]}:</b> {advices.get(selected_food["rank"])}</div>',
+                        unsafe_allow_html=True)
+
+            col_chart, col_recipe = st.columns([2, 1])
+            with col_chart:
+                fig = px.bar(nut_df.sort_values('Amount', ascending=False).head(15), x='Amount', y='Nutrient',
+                             orientation='h', color='Amount')
+                st.plotly_chart(fig, use_container_width=True)
+            with col_recipe:
+                rs.show_recipe_section(selected_food['description'])
+
+# --- TAB 2: ELITE FOODS LAB (GIỮ NGUYÊN MONGODB) ---
 with tab_recommend:
-    # A. Admin Panel
     with st.expander(L["admin_title"]):
-        with st.form("admin_post_form"):
-            new_title = st.text_input(L["food_name"])
-            new_cat = st.selectbox(L["category"], ["Beans", "Nuts", "Seeds", "Greens"])
-            new_img = st.text_input("Image URL")
-            new_content = st.text_area("Content")
+        with st.form("admin_form"):
+            t = st.text_input(L["food_name"] if "food_name" in L else "Title")
+            c = st.selectbox("Category", ["Beans", "Nuts", "Seeds", "Greens"])
+            img = st.text_input("Image URL")
+            content = st.text_area("Content")
             if st.form_submit_button(L["publish_btn"]):
-                articles_col.insert_one({
-                    "title": new_title, "category": new_cat, "image": new_img,
-                    "content": new_content, "date": datetime.now(), "comments": []
-                })
+                articles_col.insert_one(
+                    {"title": t, "category": c, "image": img, "content": content, "date": datetime.now(),
+                     "comments": []})
+                st.success("Published!");
                 st.rerun()
 
-    # B. Bài viết & Comment
+    # Hiển thị bài viết Grid 3 cột
     articles = list(articles_col.find().sort("date", -1))
-    cols = st.columns(3)
+    grid = st.columns(3)
     for idx, art in enumerate(articles):
-        with cols[idx % 3]:
+        with grid[idx % 3]:
             st.image(art.get('image') or "https://via.placeholder.com/300", use_container_width=True)
             st.subheader(art['title'])
-            if st.button(L["read_more"], key=f"btn_{art['_id']}"):
-                st.session_state.selected_art_id = art['_id']
+            if st.button(L["read_more"], key=f"art_{art['_id']}"):
+                st.session_state.selected_article_id = art['_id']
 
-    if 'selected_art_id' in st.session_state:
-        st.divider()
-        curr_art = articles_col.find_one({"_id": st.session_state.selected_art_id})
-        if curr_art:
-            st.header(curr_art['title'])
-            st.write(curr_art['content'])
+    # Chi tiết & Comment
+    if 'selected_article_id' in st.session_state:
+        det = articles_col.find_one({"_id": st.session_state.selected_article_id})
+        if det:
+            st.markdown("---")
+            st.header(det['title'])
+            st.write(det['content'])
 
-            # Thảo luận
             st.subheader(L["discussion"])
-            for c in curr_art.get('comments', []):
-                with st.chat_message("user"):
-                    st.write(f"**{c['user']}**: {c['text']}")
+            for cmt in det.get('comments', []):
+                with st.chat_message("user"): st.write(f"**{cmt['user']}**: {cmt['text']}")
 
             with st.form("cmt_form", clear_on_submit=True):
-                u_n = st.text_input(L["name_label"])
-                u_m = st.text_area(L["comment_label"])
+                u = st.text_input(L["name_label"])
+                m = st.text_area(L["msg_label"])
                 if st.form_submit_button(L["comment_btn"]):
-                    if not is_spam(u_m):
-                        new_cmt = {"user": u_n or "Anon", "text": u_m, "time": datetime.now().strftime("%H:%M")}
-                        articles_col.update_one({"_id": curr_art["_id"]}, {"$push": {"comments": new_cmt}})
+                    if not is_spam(m):
+                        articles_col.update_one({"_id": det["_id"]}, {
+                            "$push": {"comments": {"user": u or "Anon", "text": m, "time": datetime.now()}}})
                         st.rerun()
 
-            if st.button("✖"):
-                del st.session_state.selected_art_id
-                st.rerun()
-
-# --- TAB 3: ABOUT ---
 with tab_about:
-    st.info("Environmental Toxicology and Nutritional Research - IET 2026")
+    st.info("System optimized for Environmental Toxicology and Nutritional Research. Researcher: Thao Thanh Nguyen")
 
-st.markdown(f"<div style='text-align:center; color:gray;'>{L['source']}</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:gray; margin-top:50px;'>{L['source']}</div>", unsafe_allow_html=True)
