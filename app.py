@@ -5,6 +5,15 @@ from pymongo import MongoClient
 import recipe_service as rs
 from datetime import datetime
 import time
+import requests
+
+def send_to_webhook(data):
+    try:
+        # Anh cần thêm WEBHOOK_URL vào file secrets.toml
+        webhook_url = st.secrets.get("WEBHOOK_URL", "https://your-link.com")
+        requests.post(webhook_url, json=data, timeout=5)
+    except Exception as e:
+        st.error(f"Lỗi gửi dữ liệu: {e}")
 
 # --- 1. PAGE CONFIG ---
 st.set_page_config(page_title="Diabetes Research Factory", layout="wide")
@@ -31,7 +40,8 @@ LANGUAGES = {
         "comment_btn": "Gửi bình luận",
         "name_label": "Tên của bạn",
         "msg_label": "Ý kiến của bạn",
-        "source": "© Nguồn dữ liệu: Thành phần thực phẩm của USDA"
+        "source": "© Nguồn dữ liệu: Thành phần thực phẩm của USDA",
+        "register": "Đăng ký tài khoản nghiên cứu"
     },
     "English": {
         "title": "🛡️ Decoding Food, Defeating Diabetes",
@@ -53,7 +63,8 @@ LANGUAGES = {
         "comment_btn": "Post Comment",
         "name_label": "Your Name",
         "msg_label": "Add to discussion",
-        "source": "© Data source: USDA's Food Composition"
+        "source": "© Data source: USDA's Food Composition",
+        "register": "Research Account Registration"
     }
 }
 
@@ -103,6 +114,23 @@ with st.sidebar:
     if c2.button("🇺🇸 English"): st.session_state.lang = "English"; st.rerun()
     st.divider()
     st.info(f"Phần mềm Nghiên cứu: {st.session_state.lang}")
+
+# --- 7. MÀN HÌNH ĐĂNG KÝ CHI TIẾT ---
+if st.session_state.get('step') == "DANG_KY_FORM":
+    st.header("📝 " + L["register"])
+    with st.form("reg_form"):
+        c1, c2 = st.columns(2)
+        fn = c1.text_input("Họ và Tên*")
+        em = c1.text_input("Email*")
+        un = c2.text_input("Viện/Trường*")
+        pw = st.text_input("Mật khẩu*", type="password")
+        bio = st.text_area("Hướng nghiên cứu")
+        if st.form_submit_button("✅ Hoàn tất"):
+            send_to_webhook({"action": "REGISTER", "full_name": fn, "email": em, "uni": un, "bio": bio})
+            st.session_state.user_email = em
+            st.session_state.step = "HOME"
+            st.rerun()
+    if st.button("⬅️ Quay lại"): st.session_state.step = "HOME"; st.rerun()
 
 # --- 7. MAIN INTERFACE ---
 st.title(L["title"])
