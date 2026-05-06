@@ -10,36 +10,8 @@ import streamlit as st
 import google.generativeai as genai
 
 # Cấu hình AI
-try:
-    api_key = st.secrets["GEMINI_API_KEY"]
-    genai.configure(api_key=api_key)
-
-    # THAY ĐỔI TẠI ĐÂY: Sử dụng gemini-1.5-pro-latest
-    # Một số tài khoản API mới chưa được map đúng cho bản Flash trên v1beta
-    model = genai.GenerativeModel('gemini-1.5-pro-latest')
-
-    system_context = (
-        "You are a professional medical expert in diabetes. "
-        "Provide scientific and clear advice in English."
-    )
-
-    # Thực hiện gọi nội dung
-    response = model.generate_content(f"{system_context}\n\nPatient: {prompt}")
-
-    if response.text:
-        with st.chat_message("assistant"):
-            st.markdown(response.text)
-        st.session_state.messages.append({"role": "assistant", "content": response.text})
-
-except Exception as e:
-    # Nếu vẫn báo 404, chúng ta sẽ ép hệ thống dùng bản 1.0 Pro để chắc chắn chạy được
-    st.warning("Switching to backup model due to connection issues...")
-    try:
-        backup_model = genai.GenerativeModel('gemini-pro')
-        response = backup_model.generate_content(prompt)
-        st.chat_message("assistant").markdown(response.text)
-    except:
-        st.error(f"AI Error: {str(e)}")
+genai.configure(api_key="GEMINI_API_KEY")
+model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
 
 def send_to_webhook(data):
@@ -331,64 +303,65 @@ else:
 
     # --- 9. AI CHATBOT SECTION (PERMANENTLY VISIBLE) ---
 
+    # --- 9. AI CHATBOT SECTION (AUTO-MODEL RECOVERY) ---
+
     def handle_ai_chat():
-        # Initialize chat history
         if "messages" not in st.session_state:
             st.session_state.messages = []
 
         st.divider()
         st.subheader("👨‍⚕️ Expert Diabetes Consultation")
-        st.write("Do you need advice from a Diabetes Expert?")
 
-        # --- HOW TO CHANGE TO YOUR IMAGE ---
-        # 1. If your image is online: st.image("https://your-link.com/image.jpg")
-        # 2. If your image is local: st.image("C:/path/to/your/doctor_image.jpg")
-        # I will use a placeholder for now:
-        st.image("https://cdn-icons-png.flaticon.com/512/387/387561.png", width=80)
+        col_doc, col_intro = st.columns([1, 4])
+        with col_doc:
+            # Thay bằng file ảnh của anh: st.image("doctor.jpg", width=100)
+            st.image("https://cdn-icons-png.flaticon.com/512/387/387561.png", width=100)
+        with col_intro:
+            st.write("**Dr. AI Assistant**")
+            st.caption("Specializing in Endocrinology & Nutrition")
 
-        # Create the chat container
         with st.container(border=True):
-            st.markdown("### 🤖 AI Doctor")
-
-            # Display chat history
             for message in st.session_state.messages:
                 with st.chat_message(message["role"]):
                     st.markdown(message["content"])
 
-            # Chat Input with placeholder
-            # The prompt will show "Hello! I am your doctor..." inside the box
-            if prompt := st.chat_input("Hello! I am your doctor. How can I help you?"):
-                # Display user message
-                st.chat_message("user").markdown(prompt)
-                st.session_state.messages.append({"role": "user", "content": prompt})
+            # Sử dụng biến 'user_query' để tránh trùng lặp hoặc lỗi định nghĩa
+            if user_query := st.chat_input("Hello! I am your doctor. How can I help you?"):
+                st.chat_message("user").markdown(user_query)
+                st.session_state.messages.append({"role": "user", "content": user_query})
 
-                # AI Processing
-                with st.spinner("Doctor is thinking..."):
+                with st.spinner("Doctor is analyzing..."):
                     try:
-                        # Make sure GEMINI_API_KEY is in your secrets.toml
                         api_key = st.secrets["GEMINI_API_KEY"]
                         genai.configure(api_key=api_key)
-                        model = genai.GenerativeModel('gemini-1.5-flash')
 
-                        # Professional prompt setting
-                        system_context = (
-                            "You are a professional medical expert in diabetes at the Institute of Environmental Technology. "
-                            "Answer scientifically, concisely, and helpfully in English."
-                        )
-                        full_prompt = f"{system_context}\n\nUser Question: {prompt}"
+                        # DANH SÁCH CÁC MODEL THỬ NGHIỆM (Ưu tiên từ mới đến cũ)
+                        model_names = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
+                        success = False
 
-                        response = model.generate_content(full_prompt)
-                        ai_response = response.text
+                        for m_name in model_names:
+                            try:
+                                model = genai.GenerativeModel(m_name)
+                                system_msg = "You are a professional diabetes doctor. Answer in English."
+                                response = model.generate_content(f"{system_msg}\n\nPatient: {user_query}")
 
-                        # Display assistant response
-                        with st.chat_message("assistant"):
-                            st.markdown(ai_response)
-                        st.session_state.messages.append({"role": "assistant", "content": ai_response})
+                                if response.text:
+                                    with st.chat_message("assistant"):
+                                        st.markdown(response.text)
+                                    st.session_state.messages.append({"role": "assistant", "content": response.text})
+                                    success = True
+                                    break  # Thoát vòng lặp nếu thành công
+                            except:
+                                continue  # Nếu model này lỗi (404), thử model tiếp theo
+
+                        if not success:
+                            st.error("AI service is currently unavailable. Please check your API Key tier.")
+
                     except Exception as e:
-                        st.error(f"AI Error: {e}")
+                        st.error(f"System Error: {str(e)}")
 
 
-    # Call the function at the end of your file
+    # Gọi hàm cuối file
     handle_ai_chat()
 
     # --- TAB 2: ELITE FOODS LAB ---
