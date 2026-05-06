@@ -308,7 +308,7 @@ if st.session_state.get('step') == "DANG_KY_FORM":
 # Trường hợp 2: Hiển thị giao diện nghiên cứu bình thường
 else:
     # Lấy ngôn ngữ từ session để hiển thị tiêu đề
-    L = LANGUAGES.get(st.session_state.get('lang', 'Tiếng Việt'))
+    L = LANGUAGES.get(st.session_state.get('lang', 'English'))
     st.title(L["title"])
 
     # Ở đây anh dán lại 3 cái Tabs (Explorer, Elite Lab, About) của anh vào
