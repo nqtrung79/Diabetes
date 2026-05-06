@@ -154,13 +154,13 @@ def get_raw_nutrients(fdc_id):
 
 
 # --- 6. SIDEBAR VỚI LÁ CỜ ---
-with st.sidebar:
-    st.title("🌐 Language")
-    c1, c2 = st.columns(2)
-    if c1.button("Tiếng Việt"): st.session_state.lang = "Tiếng Việt"; st.rerun()
-    if c2.button("English"): st.session_state.lang = "English"; st.rerun()
-    st.divider()
-    st.info(f"Phần mềm Nghiên cứu: {st.session_state.lang}")
+# with st.sidebar:
+    # st.title("🌐 Language")
+    # c1, c2 = st.columns(2)
+    # if c1.button("Tiếng Việt"): st.session_state.lang = "Tiếng Việt"; st.rerun()
+    # if c2.button("English"): st.session_state.lang = "English"; st.rerun()
+    # st.divider()
+    # st.info(f"Phần mềm Nghiên cứu: {st.session_state.lang}")
 
 # --- 7. MÀN HÌNH ĐĂNG KÝ CHI TIẾT ---
 if st.session_state.get('step') == "DANG_KY_FORM":
