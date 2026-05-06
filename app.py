@@ -276,7 +276,9 @@ else:
                         st.markdown(f'<div class="nutrient-card"><div class="nutrient-name">{row["Nutrient"]}</div>'
                                     f'<div class="nutrient-value">{round(row["Amount"], 2)} <small>{row["Unit"]}</small></div></div>',
                                     unsafe_allow_html=True)
-
+                st.markdown(f"<div style='text-align:center; color:gray; margin-top:50px;'>{L['source']}</div>",
+                            unsafe_allow_html=True)
+                
                 advices = {
                     1: "Excellent choice!" if st.session_state.lang == "English" else "Lựa chọn tuyệt vời!",
                     2: "Safe for consumption." if st.session_state.lang == "English" else "An toàn sử dụng.",
@@ -321,8 +323,8 @@ else:
         with col_doc:
             st.image("https://cdn-icons-png.flaticon.com/512/387/387561.png", width=80)
         with col_intro:
-            st.write("**Dr. AI Assistant**")
-            st.info("Chuyên gia hỗ trợ tư vấn dinh dưỡng và chỉ số đường huyết.")
+            st.write("**Diabetes Specialist**")
+            st.info("Nutrition & Glycemic Index Support Expert.")
 
         # Container chứa nội dung chat để không bị nhảy giao diện
         chat_placeholder = st.container(height=400, border=True)
@@ -333,7 +335,7 @@ else:
                     st.markdown(message["content"])
 
         # Xử lý nhập liệu từ người dùng
-        if user_query := st.chat_input("Nhập câu hỏi của anh tại đây (Ví dụ: Is broccoli good for diabetes?)"):
+        if user_query := st.chat_input("Enter your questions (Ex: Is broccoli good for diabetes?)"):
             # 1. Hiển thị ngay câu hỏi của người dùng
             with chat_placeholder:
                 with st.chat_message("user"):
@@ -436,6 +438,3 @@ else:
     # --- TAB 3: ABOUT ---
     with tab_about:
         st.info("System optimized for Environmental Toxicology and Nutritional Research. Researcher: Thao Thanh Nguyen")
-
-    st.markdown(f"<div style='text-align:center; color:gray; margin-top:50px;'>{L['source']}</div>",
-                unsafe_allow_html=True)
