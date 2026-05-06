@@ -254,8 +254,7 @@ else:
             event = st.dataframe(df_view, use_container_width=True, on_select="rerun", selection_mode="single-row",
                                  hide_index=True)
 
-            st.markdown(f"<div style='text-align:center; color:gray; margin-top:50px;'>{L['source']}</div>",
-                        unsafe_allow_html=True)
+
             st.markdown(
                 f"<div style='color:gray; font-size: 0.8rem; margin-top: -25px; margin-bottom: 10px;'>{L['source']}</div>",
                 unsafe_allow_html=True)
