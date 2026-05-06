@@ -8,6 +8,7 @@ import time
 import requests
 import streamlit as st
 import google.generativeai as genai
+from groq import Groq
 
 # Cấu hình AI
 genai.configure(api_key="GEMINI_API_KEY")
@@ -305,63 +306,66 @@ else:
 
     # --- 9. AI CHATBOT SECTION (AUTO-MODEL RECOVERY) ---
 
+    from groq import Groq
+
+
+    # --- 9. AI CHATBOT SECTION (POWERED BY GROQ) ---
+
     def handle_ai_chat():
         if "messages" not in st.session_state:
             st.session_state.messages = []
 
         st.divider()
-        st.subheader("👨‍⚕️ Expert Diabetes Consultation")
+        st.subheader("👨‍⚕️ Expert Diabetes Consultation (Powered by Groq)")
 
         col_doc, col_intro = st.columns([1, 4])
         with col_doc:
-            # Thay bằng file ảnh của anh: st.image("doctor.jpg", width=100)
+            # Anh thay file ảnh bác sĩ của anh vào đây nhé
             st.image("https://cdn-icons-png.flaticon.com/512/387/387561.png", width=100)
         with col_intro:
             st.write("**Dr. AI Assistant**")
             st.caption("Specializing in Endocrinology & Nutrition")
 
         with st.container(border=True):
+            # Hiển thị lịch sử chat
             for message in st.session_state.messages:
                 with st.chat_message(message["role"]):
                     st.markdown(message["content"])
 
-            # Sử dụng biến 'user_query' để tránh trùng lặp hoặc lỗi định nghĩa
+            # Ô nhập liệu tiếng Anh
             if user_query := st.chat_input("Hello! I am your doctor. How can I help you?"):
                 st.chat_message("user").markdown(user_query)
                 st.session_state.messages.append({"role": "user", "content": user_query})
 
-                with st.spinner("Doctor is analyzing..."):
+                with st.spinner("Doctor is responding instantly..."):
                     try:
-                        api_key = st.secrets["GEMINI_API_KEY"]
-                        genai.configure(api_key=api_key)
+                        # Khởi tạo Groq Client với Key anh cung cấp
+                        # Tốt nhất anh nên đưa key này vào st.secrets["GROQ_API_KEY"]
+                        client = Groq(api_key="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")
 
-                        # DANH SÁCH CÁC MODEL THỬ NGHIỆM (Ưu tiên từ mới đến cũ)
-                        model_names = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
-                        success = False
+                        # Gọi model Llama 3 trên Groq
+                        completion = client.chat.completions.create(
+                            model="llama-3.3-70b-versatile",
+                            messages=[
+                                {"role": "system",
+                                 "content": "You are a professional diabetes doctor at the Institute of Environmental Technology. Answer scientifically and concisely in English."},
+                                {"role": "user", "content": user_query}
+                            ],
+                            temperature=0.7,
+                            max_tokens=1024,
+                        )
 
-                        for m_name in model_names:
-                            try:
-                                model = genai.GenerativeModel(m_name)
-                                system_msg = "You are a professional diabetes doctor. Answer in English."
-                                response = model.generate_content(f"{system_msg}\n\nPatient: {user_query}")
+                        ai_response = completion.choices[0].message.content
 
-                                if response.text:
-                                    with st.chat_message("assistant"):
-                                        st.markdown(response.text)
-                                    st.session_state.messages.append({"role": "assistant", "content": response.text})
-                                    success = True
-                                    break  # Thoát vòng lặp nếu thành công
-                            except:
-                                continue  # Nếu model này lỗi (404), thử model tiếp theo
-
-                        if not success:
-                            st.error("AI service is currently unavailable. Please check your API Key tier.")
+                        with st.chat_message("assistant"):
+                            st.markdown(ai_response)
+                        st.session_state.messages.append({"role": "assistant", "content": ai_response})
 
                     except Exception as e:
-                        st.error(f"System Error: {str(e)}")
+                        st.error(f"Groq API Error: {str(e)}")
 
 
-    # Gọi hàm cuối file
+    # Gọi hàm ở cuối file
     handle_ai_chat()
 
     # --- TAB 2: ELITE FOODS LAB ---
