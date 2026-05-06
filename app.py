@@ -329,29 +329,34 @@ else:
             st.write("**Diabetes Specialist**")
             st.info("Nutrition & Glycemic Index Support Expert.")
 
-        # Container chứa nội dung chat để không bị nhảy giao diện
         # 1. Kiểm tra xem đã có tin nhắn nào chưa
         if st.session_state.messages:
-        # Chỉ tạo container khi danh sách tin nhắn không trống
-        chat_placeholder = st.container(height=400, border=True)
+            # Dòng này phải thụt vào 4 dấu cách so với chữ 'if'
+            chat_placeholder = st.container(height=400, border=True)
 
-        with chat_placeholder:
-            for message in st.session_state.messages:
-                with st.chat_message(message["role"]):
-                    st.markdown(message["content"])
+            with chat_placeholder:
+                for message in st.session_state.messages:
+                    with st.chat_message(message["role"]):
+                        st.markdown(message["content"])
         else:
-        # Nếu chưa có tin nhắn, ta không tạo container có chiều cao cố định
-        # Có thể để một dòng trống hoặc caption nhỏ ở đây
-        st.empty()
-        
+            # Dòng này phải thụt vào 4 dấu cách so với chữ 'else'
+            st.empty()
+
         # Xử lý nhập liệu từ người dùng
-        if user_query := st.chat_input("Enter your questions (Ex: Is broccoli good for diabetes?)"):
-            # 1. Hiển thị ngay câu hỏi của người dùng
+        if user_query := st.chat_input("Enter your questions..."):
+            # Chỗ này cực kỳ quan trọng:
+            # Nếu tin nhắn đầu tiên chưa có, chat_placeholder chưa được tạo ở trên,
+            # nên ta cần kiểm tra lại để tránh lỗi "NameError: name 'chat_placeholder' is not defined"
+
+            if "chat_placeholder" not in locals():
+                chat_placeholder = st.container(height=400, border=True)
+
             with chat_placeholder:
                 with st.chat_message("user"):
                     st.markdown(user_query)
-            st.session_state.messages.append({"role": "user", "content": user_query})
 
+            st.session_state.messages.append({"role": "user", "content": user_query})
+            
             # 2. Gọi API Groq
             with st.spinner("Đang kết nối với trí tuệ nhân tạo..."):
                 try:
