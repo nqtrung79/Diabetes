@@ -110,45 +110,34 @@ L = LANGUAGES[st.session_state.lang]
 
 def display_sidebar_auth():
     with st.sidebar:
-        # 1. PHẦN CHỌN NGÔN NGỮ (Giữ nguyên của anh)
-        st.write("🌐 **Language / Ngôn ngữ**")
-        c_vn, c_us = st.columns(2)
-        if c_vn.button("🇻🇳 Tiếng Việt"): st.session_state.lang = "Tiếng Việt"; st.rerun()
-        if c_us.button("🇺🇸 English"): st.session_state.lang = "English"; st.rerun()
+        # Lấy từ điển dựa trên ngôn ngữ đang chọn
+        L = LANGUAGES.get(st.session_state.get('lang', 'English'), LANGUAGES['English'])
 
-        st.divider()
         st.title("🛡️ Research Factory")
 
-        # 2. KIỂM TRA ĐĂNG NHẬP (Linh hoạt cho mọi người dùng)
         if 'user_email' in st.session_state and st.session_state.user_email:
             st.success(f"👤 {st.session_state.user_email}")
-            if st.button("Đăng xuất"):
-                # Xóa sạch thông tin để người khác có thể đăng nhập
+            if st.button(L["logout_btn"]):  # Đã đổi sang tiếng Anh/Việt
                 for key in ["user_email", "step"]:
-                    if key in st.session_state:
-                        del st.session_state[key]
+                    if key in st.session_state: del st.session_state[key]
                 st.rerun()
         else:
-            st.subheader("🔑 Tài khoản")
-            tab1, tab2 = st.tabs(["Đăng nhập", "Đăng ký"])
+            st.subheader(L["auth_header"])  # 🔑 Account
+            tab1, tab2 = st.tabs([L["login_tab"], L["register_tab"]])
 
             with tab1:
-                # Ô trống để người dùng tự nhập email của họ
-                email = st.text_input("Email", key="login_email", placeholder="vidu@email.com")
-                password = st.text_input("Mật khẩu", type="password", key="login_pass")
-                if st.button("Xác nhận Đăng nhập", use_container_width=True):
+                email = st.text_input(L["email_label"], key="login_email")
+                password = st.text_input(L["password_label"], type="password", key="login_pass")
+                if st.button(L["login_confirm"], use_container_width=True):
                     if email and password:
                         send_to_webhook({"action": "LOGIN", "email": email})
-                        st.session_state.user_email = email  # Lưu email của người đang ngồi trước máy
-                        st.success("Đã đăng nhập!")
+                        st.session_state.user_email = email
                         st.rerun()
-                    else:
-                        st.error("Vui lòng nhập đủ thông tin.")
 
             with tab2:
-                st.write("Bạn chưa có tài khoản?")
-                if st.button("Tạo tài khoản mới", use_container_width=True):
-                    st.session_state.step = "DANG_KY_FORM"  # Chuyển sang màn hình đăng ký ở giữa
+                st.write(L["no_account"])
+                if st.button(L["create_account"], use_container_width=True):
+                    st.session_state.step = "DANG_KY_FORM"
                     st.rerun()
 
         st.divider()
