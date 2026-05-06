@@ -41,7 +41,16 @@ LANGUAGES = {
         "name_label": "Tên của bạn",
         "msg_label": "Ý kiến của bạn",
         "source": "© Nguồn dữ liệu: Thành phần thực phẩm của USDA",
-        "register": "Đăng ký tài khoản nghiên cứu"
+        "register": "Đăng ký tài khoản nghiên cứu",
+        "auth_header": "🔑 Account",
+        "login_tab": "Login",
+        "register_tab": "Register",
+        "email_label": "Email",
+        "password_label": "Password",
+        "login_confirm": "Confirm Login",
+        "logout_btn": "Logout",
+        "no_account": "Don't have an account?",
+        "create_account": "Create new account"
     },
     "English": {
         "title": "🛡️ Decoding Food, Defeating Diabetes",
@@ -64,7 +73,16 @@ LANGUAGES = {
         "name_label": "Your Name",
         "msg_label": "Add to discussion",
         "source": "© Data source: USDA's Food Composition",
-        "register": "Research Account Registration"
+        "register": "Research Account Registration",
+        "auth_header": "🔑 Tài khoản",
+        "login_tab": "Đăng nhập",
+        "register_tab": "Đăng ký",
+        "email_label": "Email",
+        "password_label": "Mật khẩu",
+        "login_confirm": "Xác nhận Đăng nhập",
+        "logout_btn": "Đăng xuất",
+        "no_account": "Bạn chưa có tài khoản?",
+        "create_account": "Tạo tài khoản mới"
     }
 }
 
