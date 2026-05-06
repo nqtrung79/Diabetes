@@ -11,13 +11,8 @@ import google.generativeai as genai
 
 # Cấu hình AI
 genai.configure(api_key="GEMINI_API_KEY")
-model = genai.GenerativeModel('gemini-pro')
+model = genai.GenerativeModel('gemini-1.5-flash')
 
-def get_ai_advice(query):
-    # Thiết lập "vai trò" cho AI để nó trả lời như một chuyên gia
-    prompt = f"Bạn là một chuyên gia về bệnh tiểu đường. Hãy trả lời câu hỏi sau một cách khoa học và dễ hiểu: {query}"
-    response = model.generate_content(prompt)
-    return response.text
 
 def send_to_webhook(data):
     try:
@@ -305,12 +300,59 @@ else:
                 with col_recipe:
                     rs.show_recipe_section(selected_food['description'])
 
-    # Giao diện trên Streamlit
-    st.subheader("🤖 Trợ lý AI Tiểu đường")
-    user_input = st.text_input("Nhập câu hỏi của bạn (ví dụ: Tôi có nên ăn sầu riêng không?)")
-    if user_input:
-        advice = get_ai_advice(user_input)
-        st.write(advice)
+
+    # --- 9. CHATBOT AI (DẠNG POPOVER ĐÍNH KÈM) ---
+
+    def handle_ai_chat():
+        # Cấu hình Model (Dùng bản 1.5 Flash cho nhanh và rẻ)
+        try:
+            api_key = st.secrets["GEMINI_API_KEY"]
+            genai.configure(api_key=api_key)
+            # Sử dụng gemini-1.5-flash để tránh lỗi InvalidArgument của bản cũ
+            model = genai.GenerativeModel('gemini-1.5-flash')
+        except Exception as e:
+            st.error("Chưa cấu hình API Key trong Secrets.")
+            return
+
+        # Tạo nút nhấn dạng Popover (Giống nút chat ngân hàng)
+        with st.sidebar:
+            st.divider()
+            with st.popover("💬 Trợ lý AI (Hỗ trợ 24/7)", use_container_width=True):
+                st.markdown("### 🤖 Diabetes Assistant")
+                st.caption("Tôi là chuyên gia AI hỗ trợ giải đáp về tiểu đường và dinh dưỡng.")
+
+                # Khởi tạo lịch sử chat nếu chưa có
+                if "messages" not in st.session_state:
+                    st.session_state.messages = []
+
+                # Hiển thị các tin nhắn cũ
+                for message in st.session_state.messages:
+                    with st.chat_message(message["role"]):
+                        st.markdown(message["content"])
+
+                # Ô nhập liệu tin nhắn
+                if prompt := st.chat_input("Hỏi tôi về thực phẩm hoặc bệnh lý..."):
+                    # Hiển thị tin nhắn người dùng
+                    st.chat_message("user").markdown(prompt)
+                    st.session_state.messages.append({"role": "user", "content": prompt})
+
+                    # Gửi tới AI xử lý
+                    with st.spinner("AI đang suy nghĩ..."):
+                        try:
+                            full_prompt = f"Bạn là một chuyên gia y tế về bệnh tiểu đường tại Viện Công nghệ Môi trường. Hãy trả lời câu hỏi sau một cách khoa học: {prompt}"
+                            response = model.generate_content(full_prompt)
+                            ai_response = response.text
+
+                            # Hiển thị câu trả lời
+                            with st.chat_message("assistant"):
+                                st.markdown(ai_response)
+                            st.session_state.messages.append({"role": "assistant", "content": ai_response})
+                        except Exception as e:
+                            st.error(f"Lỗi AI: {e}")
+
+
+    # Gọi hàm chatbot
+    handle_ai_chat()
 
     # --- TAB 2: ELITE FOODS LAB ---
     with tab_recommend:
