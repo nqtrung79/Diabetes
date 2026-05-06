@@ -256,6 +256,9 @@ else:
 
             st.markdown(f"<div style='text-align:center; color:gray; margin-top:50px;'>{L['source']}</div>",
                         unsafe_allow_html=True)
+            st.markdown(
+                f"<div style='color:gray; font-size: 0.8rem; margin-top: -25px; margin-bottom: 10px;'>{L['source']}</div>",
+                unsafe_allow_html=True)
 
             cp1, cp2, cp3 = st.columns([1, 2, 1])
             if cp1.button(L["prev"]): st.session_state.page = max(1, st.session_state.page - 1)
