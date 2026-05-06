@@ -10,9 +10,6 @@ import streamlit as st
 import google.generativeai as genai
 from groq import Groq
 
-# Cấu hình AI
-genai.configure(api_key="GEMINI_API_KEY")
-model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
 
 def send_to_webhook(data):
@@ -341,8 +338,7 @@ else:
                     try:
                         # Khởi tạo Groq Client với Key anh cung cấp
                         # Tốt nhất anh nên đưa key này vào st.secrets["GROQ_API_KEY"]
-                        client = Groq(api_key="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")
-
+                        client = Groq(api_key=st.secrets["GROQ_API_KEY"])
                         # Gọi model Llama 3 trên Groq
                         completion = client.chat.completions.create(
                             model="llama-3.3-70b-versatile",
