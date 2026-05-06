@@ -15,6 +15,89 @@ def send_to_webhook(data):
     except Exception as e:
         st.error(f"Lỗi gửi dữ liệu: {e}")
 
+def display_sidebar_auth():
+    """Luôn hiển thị trên Sidebar ở mọi trang"""
+    with st.sidebar:
+        st.title("🛡️ Research Factory")
+
+        # Kiểm tra nếu đã đăng nhập thành công
+        if 'user_email' in st.session_state and st.session_state.user_email:
+            st.success(f"👤 {st.session_state.user_email}")
+            if st.button("Đăng xuất"):
+                del st.session_state.user_email
+                # Xóa các thông tin khác nếu cần
+                st.rerun()
+        else:
+            st.subheader("🔑 Tài khoản")
+            tab1, tab2 = st.tabs(["Đăng nhập", "Đăng ký"])
+
+            with tab1:
+                email = st.text_input("Email", key="login_email")
+                password = st.text_input("Mật khẩu", type="password", key="login_pass")
+                if st.button("Xác nhận Đăng nhập", use_container_width=True):
+                    if email and password:
+                        # Gửi thông tin đăng nhập về để kiểm tra (hoặc ghi nhật ký)
+                        send_to_webhook({"action": "LOGIN", "email": email})
+                        st.session_state.user_email = email
+                        st.success("Đã đăng nhập!")
+                        st.rerun()
+                    else:
+                        st.error("Vui lòng nhập đủ thông tin.")
+
+            with tab2:
+                st.write("Bạn chưa có tài khoản?")
+                if st.button("Tạo tài khoản mới", use_container_width=True):
+                    st.session_state.step = "DANG_KY_FORM"
+                    st.rerun()
+
+        st.divider()
+        st.caption("© 2026 Young Scientist Supporter")
+
+
+def render_registration_form():
+    """Form đăng ký chi tiết hiện ở màn hình chính"""
+    st.header("📝 Đăng ký tài khoản")
+    with st.form("full_registration_form"):
+        col1, col2 = st.columns(2)
+        with col1:
+            full_name = st.text_input("Họ và Tên*")
+            email = st.text_input("Email đăng ký*")
+        with col2:
+            uni = st.text_input("Trường Đại học/Viện nghiên cứu*")
+            dept = st.text_input("Khoa/Bộ môn/Phòng*")
+
+        password = st.text_input("Mật khẩu*", type="password")
+        extra_bio = st.text_area("Giới thiệu ngắn về hướng nghiên cứu của bạn")
+
+        submitted = st.form_submit_button("✅ Hoàn tất Đăng ký")
+        if submitted:
+            if not email or not full_name or not password:
+                st.error("Vui lòng điền các thông tin bắt buộc (*)")
+            else:
+                # 1. Gói dữ liệu gửi về Webhook để lưu vào Google Sheet vĩnh viễn
+                reg_data = {
+                    "action": "REGISTER",
+                    "full_name": full_name,
+                    "email": email,
+                    "password": password,  # Lưu ý: Thực tế cần mã hóa mật khẩu
+                    "uni": uni,
+                    "dept": dept,
+                    "bio": extra_bio
+                }
+                send_to_webhook(reg_data)
+
+                # 2. Lưu vào session để sử dụng ngay
+                st.session_state.user_email = email
+                st.success("Tạo tài khoản thành công! Thông tin đã được lưu hệ thống.")
+
+                # Chuyển hướng
+                st.session_state.step = "CHOICE_LEVEL"
+                st.rerun()
+
+    if st.button("⬅️ Quay lại"):
+        st.session_state.step = "CHOICE_LEVEL"
+        st.rerun()
+
 # --- 1. PAGE CONFIG ---
 st.set_page_config(page_title="Diabetes Research Factory", layout="wide")
 
@@ -110,8 +193,8 @@ def get_raw_nutrients(fdc_id):
 with st.sidebar:
     st.title("🌐 Language")
     c1, c2 = st.columns(2)
-    if c1.button("🇻🇳 Tiếng Việt"): st.session_state.lang = "Tiếng Việt"; st.rerun()
-    if c2.button("🇺🇸 English"): st.session_state.lang = "English"; st.rerun()
+    if c1.button("Tiếng Việt"): st.session_state.lang = "Tiếng Việt"; st.rerun()
+    if c2.button("English"): st.session_state.lang = "English"; st.rerun()
     st.divider()
     st.info(f"Phần mềm Nghiên cứu: {st.session_state.lang}")
 
