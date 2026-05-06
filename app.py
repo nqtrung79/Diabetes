@@ -299,13 +299,6 @@ else:
                     rs.show_recipe_section(selected_food['description'])
 
 
-    # --- 9. AI CHATBOT SECTION (PERMANENTLY VISIBLE) ---
-
-    # --- 9. AI CHATBOT SECTION (AUTO-MODEL RECOVERY) ---
-
-    from groq import Groq
-
-
     # --- 9. AI CHATBOT SECTION (POWERED BY GROQ) ---
 
     import streamlit as st
@@ -355,7 +348,7 @@ else:
                         st.error("Lỗi: Không tìm thấy GROQ_API_KEY trong file secrets.toml")
                         return
 
-                    client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+                    client = Groq(api_key=st.secrets["Groq_API_KEY"])
 
                     # Cấu hình tham số tối ưu cho tư vấn khoa học
                     completion = client.chat.completions.create(
