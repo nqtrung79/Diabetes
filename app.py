@@ -10,93 +10,10 @@ import requests
 def send_to_webhook(data):
     try:
         # Anh cần thêm WEBHOOK_URL vào file secrets.toml
-        webhook_url = st.secrets.get("WEBHOOK_URL", "https://your-link.com")
+        webhook_url = st.secrets.get("WEBHOOK_URL")
         requests.post(webhook_url, json=data, timeout=5)
     except Exception as e:
         st.error(f"Lỗi gửi dữ liệu: {e}")
-
-def display_sidebar_auth():
-    """Luôn hiển thị trên Sidebar ở mọi trang"""
-    with st.sidebar:
-        st.title("🛡️ Research Factory")
-
-        # Kiểm tra nếu đã đăng nhập thành công
-        if 'user_email' in st.session_state and st.session_state.user_email:
-            st.success(f"👤 {st.session_state.user_email}")
-            if st.button("Đăng xuất"):
-                del st.session_state.user_email
-                # Xóa các thông tin khác nếu cần
-                st.rerun()
-        else:
-            st.subheader("🔑 Tài khoản")
-            tab1, tab2 = st.tabs(["Đăng nhập", "Đăng ký"])
-
-            with tab1:
-                email = st.text_input("Email", key="login_email")
-                password = st.text_input("Mật khẩu", type="password", key="login_pass")
-                if st.button("Xác nhận Đăng nhập", use_container_width=True):
-                    if email and password:
-                        # Gửi thông tin đăng nhập về để kiểm tra (hoặc ghi nhật ký)
-                        send_to_webhook({"action": "LOGIN", "email": email})
-                        st.session_state.user_email = email
-                        st.success("Đã đăng nhập!")
-                        st.rerun()
-                    else:
-                        st.error("Vui lòng nhập đủ thông tin.")
-
-            with tab2:
-                st.write("Bạn chưa có tài khoản?")
-                if st.button("Tạo tài khoản mới", use_container_width=True):
-                    st.session_state.step = "DANG_KY_FORM"
-                    st.rerun()
-
-        st.divider()
-        st.caption("© 2026 Young Scientist Supporter")
-
-
-def render_registration_form():
-    """Form đăng ký chi tiết hiện ở màn hình chính"""
-    st.header("📝 Đăng ký tài khoản")
-    with st.form("full_registration_form"):
-        col1, col2 = st.columns(2)
-        with col1:
-            full_name = st.text_input("Họ và Tên*")
-            email = st.text_input("Email đăng ký*")
-        with col2:
-            uni = st.text_input("Trường Đại học/Viện nghiên cứu*")
-            dept = st.text_input("Khoa/Bộ môn/Phòng*")
-
-        password = st.text_input("Mật khẩu*", type="password")
-        extra_bio = st.text_area("Giới thiệu ngắn về hướng nghiên cứu của bạn")
-
-        submitted = st.form_submit_button("✅ Hoàn tất Đăng ký")
-        if submitted:
-            if not email or not full_name or not password:
-                st.error("Vui lòng điền các thông tin bắt buộc (*)")
-            else:
-                # 1. Gói dữ liệu gửi về Webhook để lưu vào Google Sheet vĩnh viễn
-                reg_data = {
-                    "action": "REGISTER",
-                    "full_name": full_name,
-                    "email": email,
-                    "password": password,  # Lưu ý: Thực tế cần mã hóa mật khẩu
-                    "uni": uni,
-                    "dept": dept,
-                    "bio": extra_bio
-                }
-                send_to_webhook(reg_data)
-
-                # 2. Lưu vào session để sử dụng ngay
-                st.session_state.user_email = email
-                st.success("Tạo tài khoản thành công! Thông tin đã được lưu hệ thống.")
-
-                # Chuyển hướng
-                st.session_state.step = "CHOICE_LEVEL"
-                st.rerun()
-
-    if st.button("⬅️ Quay lại"):
-        st.session_state.step = "CHOICE_LEVEL"
-        st.rerun()
 
 # --- 1. PAGE CONFIG ---
 st.set_page_config(page_title="Diabetes Research Factory", layout="wide")
@@ -171,6 +88,53 @@ articles_col = db['food_articles']
 
 if 'lang' not in st.session_state: st.session_state.lang = "Tiếng Việt"
 L = LANGUAGES[st.session_state.lang]
+
+
+def display_sidebar_auth():
+    with st.sidebar:
+        # 1. PHẦN CHỌN NGÔN NGỮ (Giữ nguyên của anh)
+        st.write("🌐 **Language / Ngôn ngữ**")
+        c_vn, c_us = st.columns(2)
+        if c_vn.button("🇻🇳 Tiếng Việt"): st.session_state.lang = "Tiếng Việt"; st.rerun()
+        if c_us.button("🇺🇸 English"): st.session_state.lang = "English"; st.rerun()
+
+        st.divider()
+        st.title("🛡️ Research Factory")
+
+        # 2. KIỂM TRA ĐĂNG NHẬP (Linh hoạt cho mọi người dùng)
+        if 'user_email' in st.session_state and st.session_state.user_email:
+            st.success(f"👤 {st.session_state.user_email}")
+            if st.button("Đăng xuất"):
+                # Xóa sạch thông tin để người khác có thể đăng nhập
+                for key in ["user_email", "step"]:
+                    if key in st.session_state:
+                        del st.session_state[key]
+                st.rerun()
+        else:
+            st.subheader("🔑 Tài khoản")
+            tab1, tab2 = st.tabs(["Đăng nhập", "Đăng ký"])
+
+            with tab1:
+                # Ô trống để người dùng tự nhập email của họ
+                email = st.text_input("Email", key="login_email", placeholder="vidu@email.com")
+                password = st.text_input("Mật khẩu", type="password", key="login_pass")
+                if st.button("Xác nhận Đăng nhập", use_container_width=True):
+                    if email and password:
+                        send_to_webhook({"action": "LOGIN", "email": email})
+                        st.session_state.user_email = email  # Lưu email của người đang ngồi trước máy
+                        st.success("Đã đăng nhập!")
+                        st.rerun()
+                    else:
+                        st.error("Vui lòng nhập đủ thông tin.")
+
+            with tab2:
+                st.write("Bạn chưa có tài khoản?")
+                if st.button("Tạo tài khoản mới", use_container_width=True):
+                    st.session_state.step = "DANG_KY_FORM"  # Chuyển sang màn hình đăng ký ở giữa
+                    st.rerun()
+
+        st.divider()
+        st.caption("© 2026 Young Scientist Supporter")
 
 
 # --- 5. LOGIC THUẬT TOÁN (ANTI-SPAM & FETCHING) ---
@@ -332,3 +296,21 @@ with tab_about:
     st.info("System optimized for Environmental Toxicology and Nutritional Research. Researcher: Thao Thanh Nguyen")
 
 st.markdown(f"<div style='text-align:center; color:gray; margin-top:50px;'>{L['source']}</div>", unsafe_allow_html=True)
+
+# --- BƯỚC A: HIỂN THỊ SIDEBAR TRƯỚC ---
+display_sidebar_auth()
+
+# --- BƯỚC B: ĐIỀU HƯỚNG NỘI DUNG CHÍNH ---
+# Trường hợp 1: Người dùng nhấn "Đăng ký" trên Sidebar
+if st.session_state.get('step') == "DANG_KY_FORM":
+    render_registration_form()  # Gọi hàm Form chi tiết của anh ở đây
+
+# Trường hợp 2: Hiển thị giao diện nghiên cứu bình thường
+else:
+    # Lấy ngôn ngữ từ session để hiển thị tiêu đề
+    L = LANGUAGES.get(st.session_state.get('lang', 'Tiếng Việt'))
+    st.title(L["title"])
+
+    # Ở đây anh dán lại 3 cái Tabs (Explorer, Elite Lab, About) của anh vào
+    tab1, tab2, tab3 = st.tabs([L["tab1"], L["tab2"], L["tab3"]])
+    # ... code của các tab ...
