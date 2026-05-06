@@ -330,13 +330,20 @@ else:
             st.info("Nutrition & Glycemic Index Support Expert.")
 
         # Container chứa nội dung chat để không bị nhảy giao diện
+        # 1. Kiểm tra xem đã có tin nhắn nào chưa
+        if st.session_state.messages:
+        # Chỉ tạo container khi danh sách tin nhắn không trống
         chat_placeholder = st.container(height=400, border=True)
 
         with chat_placeholder:
             for message in st.session_state.messages:
                 with st.chat_message(message["role"]):
                     st.markdown(message["content"])
-
+        else:
+        # Nếu chưa có tin nhắn, ta không tạo container có chiều cao cố định
+        # Có thể để một dòng trống hoặc caption nhỏ ở đây
+        st.empty()
+        
         # Xử lý nhập liệu từ người dùng
         if user_query := st.chat_input("Enter your questions (Ex: Is broccoli good for diabetes?)"):
             # 1. Hiển thị ngay câu hỏi của người dùng
