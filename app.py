@@ -301,86 +301,66 @@ else:
                     rs.show_recipe_section(selected_food['description'])
 
 
-    # --- 9. CHATBOT AI DẠNG FLOATING (LƠ LỬNG) ---
+    # --- 9. AI CHATBOT SECTION (PERMANENTLY VISIBLE) ---
 
     def handle_ai_chat():
-        # 1. Khởi tạo trạng thái đóng/mở chatbot
-        if "chat_open" not in st.session_state:
-            st.session_state.chat_open = False
+        # Initialize chat history
         if "messages" not in st.session_state:
             st.session_state.messages = []
 
-        # 2. CSS để tạo nút tròn lơ lửng và khung chat
-        st.markdown("""
-            <style>
-            /* Nút Avatar lơ lửng */
-            .floating-button {
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                z-index: 1000;
-                cursor: pointer;
-                transition: all 0.3s ease;
-            }
-            .floating-button:hover { transform: scale(1.1); }
+        st.divider()
+        st.subheader("👨‍⚕️ Expert Diabetes Consultation")
+        st.write("Do you need advice from a Diabetes Expert?")
 
-            /* Ảnh avatar tròn */
-            .avatar-img {
-                width: 70px;
-                height: 70px;
-                border-radius: 50%;
-                border: 3px solid #007bff;
-                box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-                object-fit: cover;
-            }
-            </style>
-        """, unsafe_allow_html=True)
+        # --- HOW TO CHANGE TO YOUR IMAGE ---
+        # 1. If your image is online: st.image("https://your-link.com/image.jpg")
+        # 2. If your image is local: st.image("C:/path/to/your/doctor_image.jpg")
+        # I will use a placeholder for now:
+        st.image("https://cdn-icons-png.flaticon.com/512/387/387561.png", width=80)
 
-        # 3. Hiển thị Nút Avatar (Dùng cột để bắt sự kiện click trong Streamlit)
-        # Lưu ý: Thay link ảnh bác sĩ của anh vào đây
-        icon_url = "https://cdn-icons-png.flaticon.com/512/387/387561.png"  # Link tạm thời
+        # Create the chat container
+        with st.container(border=True):
+            st.markdown("### 🤖 AI Doctor")
 
-        # Tạo một khu vực cố định ở góc dưới
-        with st.container():
-            col1, col2, col3 = st.columns([10, 1, 1])
-            with col3:
-                # Khi click vào ảnh, đảo trạng thái chat_open
-                if st.button("👩‍⚕️", help="Click để chat với bác sĩ AI"):
-                    st.session_state.chat_open = not st.session_state.chat_open
-                    st.rerun()
+            # Display chat history
+            for message in st.session_state.messages:
+                with st.chat_message(message["role"]):
+                    st.markdown(message["content"])
 
-        # 4. Nếu chat_open = True thì hiện cửa sổ chat
-        if st.session_state.chat_open:
-            with st.expander("💬 Trợ lý AI Tiểu đường", expanded=True):
-                st.info("Chào anh Thanh, tôi là bác sĩ AI. Tôi có thể giúp gì cho anh?")
+            # Chat Input with placeholder
+            # The prompt will show "Hello! I am your doctor..." inside the box
+            if prompt := st.chat_input("Hello! I am your doctor. How can I help you?"):
+                # Display user message
+                st.chat_message("user").markdown(prompt)
+                st.session_state.messages.append({"role": "user", "content": prompt})
 
-                # Hiển thị lịch sử chat
-                for message in st.session_state.messages:
-                    with st.chat_message(message["role"]):
-                        st.markdown(message["content"])
-
-                # Ô nhập liệu
-                if prompt := st.chat_input("Nhập câu hỏi..."):
-                    st.chat_message("user").markdown(prompt)
-                    st.session_state.messages.append({"role": "user", "content": prompt})
-
-                    # Gọi Gemini xử lý
+                # AI Processing
+                with st.spinner("Doctor is thinking..."):
                     try:
+                        # Make sure GEMINI_API_KEY is in your secrets.toml
                         api_key = st.secrets["GEMINI_API_KEY"]
                         genai.configure(api_key=api_key)
                         model = genai.GenerativeModel('gemini-1.5-flash')
 
-                        full_prompt = f"Bạn là bác sĩ chuyên gia tiểu đường. Trả lời ngắn gọn, khoa học: {prompt}"
+                        # Professional prompt setting
+                        system_context = (
+                            "You are a professional medical expert in diabetes at the Institute of Environmental Technology. "
+                            "Answer scientifically, concisely, and helpfully in English."
+                        )
+                        full_prompt = f"{system_context}\n\nUser Question: {prompt}"
+
                         response = model.generate_content(full_prompt)
+                        ai_response = response.text
 
+                        # Display assistant response
                         with st.chat_message("assistant"):
-                            st.markdown(response.text)
-                        st.session_state.messages.append({"role": "assistant", "content": response.text})
+                            st.markdown(ai_response)
+                        st.session_state.messages.append({"role": "assistant", "content": ai_response})
                     except Exception as e:
-                        st.error(f"Lỗi: {e}")
+                        st.error(f"AI Error: {e}")
 
 
-    # Gọi hàm ở cuối file (ngoài cùng, không nằm trong Tab nào)
+    # Call the function at the end of your file
     handle_ai_chat()
 
     # --- TAB 2: ELITE FOODS LAB ---
