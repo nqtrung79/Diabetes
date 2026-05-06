@@ -308,60 +308,95 @@ else:
 
     # --- 9. AI CHATBOT SECTION (POWERED BY GROQ) ---
 
+    import streamlit as st
+    from groq import Groq
+
+
+    # --- 9. AI CHATBOT SECTION (PHIÊN BẢN ĐẦY ĐỦ & CẬP NHẬT) ---
+
     def handle_ai_chat():
+        # Khởi tạo session state để lưu trữ hội thoại
         if "messages" not in st.session_state:
             st.session_state.messages = []
 
         st.divider()
-        st.subheader("👨‍⚕️ Expert Diabetes Consultation (Powered by Groq)")
+        # Hiển thị tiêu đề chuyên nghiệp phù hợp với Viện Công nghệ môi trường
+        st.subheader("👨‍⚕️ Expert Diabetes Consultation")
+        st.caption("Powered by Llama 3.3 on Groq Infrastructure")
 
         col_doc, col_intro = st.columns([1, 4])
         with col_doc:
-            # Anh thay file ảnh bác sĩ của anh vào đây nhé
-            st.image("https://cdn-icons-png.flaticon.com/512/387/387561.png", width=100)
+            st.image("https://cdn-icons-png.flaticon.com/512/387/387561.png", width=80)
         with col_intro:
             st.write("**Dr. AI Assistant**")
-            st.caption("Specializing in Endocrinology & Nutrition")
+            st.info("Chuyên gia hỗ trợ tư vấn dinh dưỡng và chỉ số đường huyết.")
 
-        with st.container(border=True):
-            # Hiển thị lịch sử chat
+        # Container chứa nội dung chat để không bị nhảy giao diện
+        chat_placeholder = st.container(height=400, border=True)
+
+        with chat_placeholder:
             for message in st.session_state.messages:
                 with st.chat_message(message["role"]):
                     st.markdown(message["content"])
 
-            # Ô nhập liệu tiếng Anh
-            if user_query := st.chat_input("Hello! I am your doctor. How can I help you?"):
-                st.chat_message("user").markdown(user_query)
-                st.session_state.messages.append({"role": "user", "content": user_query})
+        # Xử lý nhập liệu từ người dùng
+        if user_query := st.chat_input("Nhập câu hỏi của anh tại đây (Ví dụ: Is broccoli good for diabetes?)"):
+            # 1. Hiển thị ngay câu hỏi của người dùng
+            with chat_placeholder:
+                with st.chat_message("user"):
+                    st.markdown(user_query)
+            st.session_state.messages.append({"role": "user", "content": user_query})
 
-                with st.spinner("Doctor is responding instantly..."):
-                    try:
-                        # Khởi tạo Groq Client với Key anh cung cấp
-                        # Tốt nhất anh nên đưa key này vào st.secrets["GROQ_API_KEY"]
-                        client = Groq(api_key=st.secrets["GROQ_API_KEY"])
-                        # Gọi model Llama 3 trên Groq
-                        completion = client.chat.completions.create(
-                            model="llama-3.3-70b-versatile",
-                            messages=[
-                                {"role": "system",
-                                 "content": "You are a professional diabetes doctor at the Institute of Environmental Technology. Answer scientifically and concisely in English."},
-                                {"role": "user", "content": user_query}
-                            ],
-                            temperature=0.7,
-                            max_tokens=1024,
-                        )
+            # 2. Gọi API Groq
+            with st.spinner("Đang kết nối với trí tuệ nhân tạo..."):
+                try:
+                    # Kiểm tra xem Key có tồn tại trong Secrets không
+                    if "GROQ_API_KEY" not in st.secrets:
+                        st.error("Lỗi: Không tìm thấy GROQ_API_KEY trong file secrets.toml")
+                        return
 
-                        ai_response = completion.choices[0].message.content
+                    client = Groq(api_key=st.secrets["GROQ_API_KEY"])
 
+                    # Cấu hình tham số tối ưu cho tư vấn khoa học
+                    completion = client.chat.completions.create(
+                        model="llama-3.3-70b-versatile",
+                        messages=[
+                            {
+                                "role": "system",
+                                "content": (
+                                    "You are an expert endocrinologist and nutritionist at the Institute of Environmental Technology. "
+                                    "Provide scientific, evidence-based advice on diabetes and nutrition. "
+                                    "Keep responses professional, concise, and in English."
+                                )
+                            },
+                            {"role": "user", "content": user_query}
+                        ],
+                        temperature=0.5,  # Giảm xuống 0.5 để câu trả lời chính xác, ít "sáng tạo" quá mức
+                        max_tokens=1024,
+                    )
+
+                    ai_response = completion.choices[0].message.content
+
+                    # 3. Hiển thị câu trả lời của AI
+                    with chat_placeholder:
                         with st.chat_message("assistant"):
                             st.markdown(ai_response)
-                        st.session_state.messages.append({"role": "assistant", "content": ai_response})
+                    st.session_state.messages.append({"role": "assistant", "content": ai_response})
 
-                    except Exception as e:
-                        st.error(f"Groq API Error: {str(e)}")
+                    # Tự động scroll xuống cuối (Streamlit sẽ tự xử lý trong container có height)
+
+                except Exception as e:
+                    # Hiển thị lỗi chi tiết để anh Thanh biết chính xác vấn đề ở đâu
+                    error_msg = str(e)
+                    if "401" in error_msg:
+                        st.error("Lỗi xác thực: API Key của Groq không đúng hoặc đã bị thu hồi.")
+                    elif "429" in error_msg:
+                        st.error("Lỗi hạn mức: Anh đã gửi quá nhiều yêu cầu trong thời gian ngắn.")
+                    else:
+                        st.error(f"Lỗi hệ thống: {error_msg}")
 
 
-    # Gọi hàm ở cuối file
+    # Lưu ý: Gọi hàm này ở cuối file chính của anh
     handle_ai_chat()
 
     # --- TAB 2: ELITE FOODS LAB ---
