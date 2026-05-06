@@ -10,8 +10,36 @@ import streamlit as st
 import google.generativeai as genai
 
 # Cấu hình AI
-genai.configure(api_key="GEMINI_API_KEY")
-model = genai.GenerativeModel('gemini-1.5-flash-latest')
+try:
+    api_key = st.secrets["GEMINI_API_KEY"]
+    genai.configure(api_key=api_key)
+
+    # THAY ĐỔI TẠI ĐÂY: Sử dụng gemini-1.5-pro-latest
+    # Một số tài khoản API mới chưa được map đúng cho bản Flash trên v1beta
+    model = genai.GenerativeModel('gemini-1.5-pro-latest')
+
+    system_context = (
+        "You are a professional medical expert in diabetes. "
+        "Provide scientific and clear advice in English."
+    )
+
+    # Thực hiện gọi nội dung
+    response = model.generate_content(f"{system_context}\n\nPatient: {prompt}")
+
+    if response.text:
+        with st.chat_message("assistant"):
+            st.markdown(response.text)
+        st.session_state.messages.append({"role": "assistant", "content": response.text})
+
+except Exception as e:
+    # Nếu vẫn báo 404, chúng ta sẽ ép hệ thống dùng bản 1.0 Pro để chắc chắn chạy được
+    st.warning("Switching to backup model due to connection issues...")
+    try:
+        backup_model = genai.GenerativeModel('gemini-pro')
+        response = backup_model.generate_content(prompt)
+        st.chat_message("assistant").markdown(response.text)
+    except:
+        st.error(f"AI Error: {str(e)}")
 
 
 def send_to_webhook(data):
