@@ -157,7 +157,7 @@ def display_sidebar_auth():
                     st.rerun()
 
         st.divider()
-        st.caption("© 2026 Young Scientist Supporter")
+        st.caption("© 2026 Healthy Food")
 
 
 # --- 5. LOGIC THUẬT TOÁN (ANTI-SPAM & FETCHING) ---
@@ -320,20 +320,140 @@ with tab_about:
 
 st.markdown(f"<div style='text-align:center; color:gray; margin-top:50px;'>{L['source']}</div>", unsafe_allow_html=True)
 
-# --- BƯỚC A: HIỂN THỊ SIDEBAR TRƯỚC ---
+# --- 8. ĐIỀU HƯỚNG GIAO DIỆN CHÍNH (MAIN NAVIGATION) ---
+# Gọi Sidebar Auth trước để xử lý logic đăng nhập/ngôn ngữ
 display_sidebar_auth()
 
-# --- BƯỚC B: ĐIỀU HƯỚNG NỘI DUNG CHÍNH ---
-# Trường hợp 1: Người dùng nhấn "Đăng ký" trên Sidebar
+# Lấy từ điển chuẩn theo ngôn ngữ đã chọn
+L = LANGUAGES.get(st.session_state.get('lang', 'English'), LANGUAGES['English'])
+
+# TRƯỜNG HỢP 1: MÀN HÌNH ĐĂNG KÝ CHI TIẾT
 if st.session_state.get('step') == "DANG_KY_FORM":
-    render_registration_form()  # Gọi hàm Form chi tiết của anh ở đây
+    st.header("📝 " + L["register"])
+    with st.form("reg_form"):
+        c1, c2 = st.columns(2)
+        fn = c1.text_input("Họ và Tên*")
+        em = c1.text_input("Email*")
+        un = c2.text_input("Viện/Trường*")
+        pw = st.text_input("Mật khẩu*", type="password")
+        bio = st.text_area("Hướng nghiên cứu")
+        if st.form_submit_button("✅ Hoàn tất"):
+            send_to_webhook({"action": "REGISTER", "full_name": fn, "email": em, "uni": un, "bio": bio})
+            st.session_state.user_email = em
+            st.session_state.step = "HOME"
+            st.rerun()
+    if st.button("⬅️ Quay lại"):
+        st.session_state.step = "HOME"
+        st.rerun()
 
-# Trường hợp 2: Hiển thị giao diện nghiên cứu bình thường
+# TRƯỜNG HỢP 2: GIAO DIỆN CHÍNH (HOME)
 else:
-    # Lấy ngôn ngữ từ session để hiển thị tiêu đề
-    L = LANGUAGES.get(st.session_state.get('lang', 'English'))
-    st.title(L["title"])
+    st.title(L["title"])  # CHỈ GIỮ LẠI MỘT DÒNG TITLE DUY NHẤT Ở ĐÂY
 
-    # Ở đây anh dán lại 3 cái Tabs (Explorer, Elite Lab, About) của anh vào
-    tab1, tab2, tab3 = st.tabs([L["tab1"], L["tab2"], L["tab3"]])
-    # ... code của các tab ...
+    tab_explorer, tab_recommend, tab_about = st.tabs([L["tab1"], L["tab2"], L["tab3"]])
+
+    # --- TAB 1: EXPLORER ---
+    with tab_explorer:
+        search_input = st.text_input(L["search_label"], key="usda_search")
+        if 'page' not in st.session_state: st.session_state.page = 1
+        skip = (st.session_state.page - 1) * 10
+
+        query = {"description": {"$regex": search_input, "$options": "i"}} if search_input else {}
+        scored_data = list(db.Scored_Foods.find(query).sort("score", -1).skip(skip).limit(10))
+
+        if scored_data:
+            df_view = pd.DataFrame(scored_data)[["icon", "description", "score", "status"]]
+            event = st.dataframe(df_view, use_container_width=True, on_select="rerun", selection_mode="single-row",
+                                 hide_index=True)
+
+            cp1, cp2, cp3 = st.columns([1, 2, 1])
+            if cp1.button(L["prev"]): st.session_state.page = max(1, st.session_state.page - 1)
+            if cp3.button(L["next"]): st.session_state.page += 1
+
+            if len(event.selection.rows) > 0:
+                selected_food = scored_data[event.selection.rows[0]]
+                color_map = {1: "#1b5e20", 2: "#2e7d32", 3: "#f9a825", 4: "#ef6c00", 5: "#c62828", 6: "#8e0000"}
+                bg_color = color_map.get(selected_food['rank'], "#757575")
+
+                st.markdown(f'<div class="score-container" style="background-color: {bg_color};">'
+                            f'<h1 style="font-size: 70px; margin:0;">{selected_food["icon"]}</h1>'
+                            f'<h2>{selected_food["status"]}</h2>'
+                            f'<h3>{L["score_label"]}: {selected_food["score"]}/100</h3></div>', unsafe_allow_html=True)
+
+                nut_df = get_raw_nutrients(selected_food['fdc_id'])
+                st.subheader(L["nut_title"])
+                n_cols = st.columns(5)
+                for idx, row in nut_df.iterrows():
+                    with n_cols[idx % 5]:
+                        st.markdown(f'<div class="nutrient-card"><div class="nutrient-name">{row["Nutrient"]}</div>'
+                                    f'<div class="nutrient-value">{round(row["Amount"], 2)} <small>{row["Unit"]}</small></div></div>',
+                                    unsafe_allow_html=True)
+
+                advices = {
+                    1: "Excellent choice!" if st.session_state.lang == "English" else "Lựa chọn tuyệt vời!",
+                    2: "Safe for consumption." if st.session_state.lang == "English" else "An toàn sử dụng.",
+                    3: "In moderation." if st.session_state.lang == "English" else "Dùng điều độ.",
+                    4: "Caution." if st.session_state.lang == "English" else "Thận trọng.",
+                    5: "Not recommended." if st.session_state.lang == "English" else "Không khuyến khích.",
+                    6: "Danger Zone!" if st.session_state.lang == "English" else "Vùng nguy hiểm!"
+                }
+
+                st.markdown(f'<div class="ai-box"><b>{L["scientific_summary"]}:</b> {selected_food["status"]}.<br>'
+                            f'<b>{L["dietary_guidance"]}:</b> {advices.get(selected_food["rank"])}</div>',
+                            unsafe_allow_html=True)
+
+                col_chart, col_recipe = st.columns([2, 1])
+                with col_chart:
+                    fig = px.bar(nut_df.sort_values('Amount', ascending=False).head(15), x='Amount', y='Nutrient',
+                                 orientation='h', color='Amount')
+                    st.plotly_chart(fig, use_container_width=True)
+                with col_recipe:
+                    rs.show_recipe_section(selected_food['description'])
+
+    # --- TAB 2: ELITE FOODS LAB ---
+    with tab_recommend:
+        with st.expander(L["admin_title"]):
+            with st.form("admin_form"):
+                t = st.text_input("Title")
+                c = st.selectbox("Category", ["Beans", "Nuts", "Seeds", "Greens"])
+                img = st.text_input("Image URL")
+                content = st.text_area("Content")
+                if st.form_submit_button(L["publish_btn"]):
+                    articles_col.insert_one(
+                        {"title": t, "category": c, "image": img, "content": content, "date": datetime.now(),
+                         "comments": []})
+                    st.rerun()
+
+        articles = list(articles_col.find().sort("date", -1))
+        grid = st.columns(3)
+        for idx, art in enumerate(articles):
+            with grid[idx % 3]:
+                st.image(art.get('image') or "https://via.placeholder.com/300", use_container_width=True)
+                st.subheader(art['title'])
+                if st.button(L["read_more"], key=f"art_{art['_id']}"):
+                    st.session_state.selected_article_id = art['_id']
+
+        if 'selected_article_id' in st.session_state:
+            det = articles_col.find_one({"_id": st.session_state.selected_article_id})
+            if det:
+                st.markdown("---")
+                st.header(det['title'])
+                st.write(det['content'])
+                st.subheader(L["discussion"])
+                for cmt in det.get('comments', []):
+                    with st.chat_message("user"): st.write(f"**{cmt['user']}**: {cmt['text']}")
+                with st.form("cmt_form", clear_on_submit=True):
+                    u = st.text_input(L["name_label"])
+                    m = st.text_area(L["msg_label"])
+                    if st.form_submit_button(L["comment_btn"]):
+                        if not is_spam(m):
+                            articles_col.update_one({"_id": det["_id"]}, {
+                                "$push": {"comments": {"user": u or "Anon", "text": m, "time": datetime.now()}}})
+                            st.rerun()
+
+    # --- TAB 3: ABOUT ---
+    with tab_about:
+        st.info("System optimized for Environmental Toxicology and Nutritional Research. Researcher: Thao Thanh Nguyen")
+
+    st.markdown(f"<div style='text-align:center; color:gray; margin-top:50px;'>{L['source']}</div>",
+                unsafe_allow_html=True)
