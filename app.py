@@ -11,7 +11,7 @@ import google.generativeai as genai
 
 # Cấu hình AI
 genai.configure(api_key="GEMINI_API_KEY")
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
 
 def send_to_webhook(data):
