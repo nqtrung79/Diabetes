@@ -344,7 +344,7 @@ else:
             with st.spinner("Đang kết nối với trí tuệ nhân tạo..."):
                 try:
                     # Kiểm tra xem Key có tồn tại trong Secrets không
-                    if "GROQ_API_KEY" not in st.secrets:
+                    if "Groq_API_KEY" not in st.secrets:
                         st.error("Lỗi: Không tìm thấy GROQ_API_KEY trong file secrets.toml")
                         return
 
