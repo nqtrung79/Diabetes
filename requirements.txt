@@ -4,3 +4,4 @@ plotly
 pymongo
 google-generativeai
 requests
+groq
