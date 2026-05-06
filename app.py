@@ -86,7 +86,7 @@ client = MongoClient(MONGO_URI)
 db = client["USDA_Healthy_Food"]
 articles_col = db['food_articles']
 
-if 'lang' not in st.session_state: st.session_state.lang = "Tiếng Việt"
+if 'lang' not in st.session_state: st.session_state.lang = "English"
 L = LANGUAGES[st.session_state.lang]
 
 
