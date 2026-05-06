@@ -6,6 +6,18 @@ import recipe_service as rs
 from datetime import datetime
 import time
 import requests
+import streamlit as st
+import google.generativeai as genai
+
+# Cấu hình AI
+genai.configure(api_key="GEMINI_API_KEY")
+model = genai.GenerativeModel('gemini-pro')
+
+def get_ai_advice(query):
+    # Thiết lập "vai trò" cho AI để nó trả lời như một chuyên gia
+    prompt = f"Bạn là một chuyên gia về bệnh tiểu đường. Hãy trả lời câu hỏi sau một cách khoa học và dễ hiểu: {query}"
+    response = model.generate_content(prompt)
+    return response.text
 
 def send_to_webhook(data):
     try:
@@ -292,6 +304,13 @@ else:
                     st.plotly_chart(fig, use_container_width=True)
                 with col_recipe:
                     rs.show_recipe_section(selected_food['description'])
+
+    # Giao diện trên Streamlit
+    st.subheader("🤖 Trợ lý AI Tiểu đường")
+    user_input = st.text_input("Nhập câu hỏi của bạn (ví dụ: Tôi có nên ăn sầu riêng không?)")
+    if user_input:
+        advice = get_ai_advice(user_input)
+        st.write(advice)
 
     # --- TAB 2: ELITE FOODS LAB ---
     with tab_recommend:
