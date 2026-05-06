@@ -254,6 +254,9 @@ else:
             event = st.dataframe(df_view, use_container_width=True, on_select="rerun", selection_mode="single-row",
                                  hide_index=True)
 
+            st.markdown(f"<div style='text-align:center; color:gray; margin-top:50px;'>{L['source']}</div>",
+                        unsafe_allow_html=True)
+
             cp1, cp2, cp3 = st.columns([1, 2, 1])
             if cp1.button(L["prev"]): st.session_state.page = max(1, st.session_state.page - 1)
             if cp3.button(L["next"]): st.session_state.page += 1
@@ -276,9 +279,7 @@ else:
                         st.markdown(f'<div class="nutrient-card"><div class="nutrient-name">{row["Nutrient"]}</div>'
                                     f'<div class="nutrient-value">{round(row["Amount"], 2)} <small>{row["Unit"]}</small></div></div>',
                                     unsafe_allow_html=True)
-                st.markdown(f"<div style='text-align:center; color:gray; margin-top:50px;'>{L['source']}</div>",
-                            unsafe_allow_html=True)
-                
+
                 advices = {
                     1: "Excellent choice!" if st.session_state.lang == "English" else "Lựa chọn tuyệt vời!",
                     2: "Safe for consumption." if st.session_state.lang == "English" else "An toàn sử dụng.",
