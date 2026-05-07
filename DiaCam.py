@@ -114,21 +114,21 @@ def run_diacam_lab():
         return
 
     # 2. GIAO DIỆN NHẬP ẢNH
-    input_method = st.radio("Chọn phương thức:", ["📤 Tải ảnh lên", "📸 Chụp ảnh trực tiếp"], horizontal=True)
+    input_method = st.radio("Choose the way you upload your meal picture:", ["📤 Upload a picture", "📸 Take a picture"], horizontal=True)
 
     img_file = None
-    if input_method == "📤 Tải ảnh lên":
-        img_file = st.file_uploader("Chọn file ảnh món ăn", type=['jpg', 'png', 'jpeg'])
+    if input_method == "📤 Upload a picture":
+        img_file = st.file_uploader("Upload your picture here", type=['jpg', 'png', 'jpeg'])
     else:
-        img_file = st.camera_input("Đưa món ăn vào khung hình và chụp")
+        img_file = st.camera_input("Put your meal in the center")
 
     if img_file:
         img = Image.open(img_file)
-        st.image(img, width=400, caption="Ảnh đã nạp vào hệ thống")
+        st.image(img, width=400, caption="Picture is saving")
 
-        if st.button("🚀 Phân tích đa tầng"):
+        if st.button("🚀 Analyzing your meal"):
             full_text = ""
-            with st.spinner("Bước 1: Gemini đang nhận diện..."):
+            with st.spinner("Step 1: Detect your meal..."):
                 gemini_prompt = """
                 Bạn là một chuyên gia dinh dưỡng. Hãy nhìn ảnh món ăn này và thực hiện:
                 1. Phân tích các thành phần chính (Ví dụ: Phở bò có: Bánh phở, Thịt bò, Nước dùng).
@@ -140,7 +140,7 @@ def run_diacam_lab():
                 model_name = get_available_gemini_model(client_gemini)
                 res = client_gemini.models.generate_content(model=model_name, contents=[gemini_prompt, img])
                 full_text = res.text
-                st.write("✅ Gemini đã nhận diện xong.")
+                st.write("✅ Completed.")
 
             if full_text:
                 keywords = []
@@ -151,9 +151,9 @@ def run_diacam_lab():
                     if "Analysis:" in line:
                         analysis_part = line.replace("Analysis:", "")
 
-                with st.spinner("Bước 2: Đang truy vấn 50 mẫu mỗi loại từ MongoDB..."):
+                with st.spinner("Step 2: Checking Calories and GL..."):
                     summary_for_groq = ""
-                    st.subheader("📊 Thống kê chi tiết từ USDA")
+                    st.subheader("📊 Results from your meal")
 
                     for kw in keywords:
                         stats = lookup_and_calculate(db, kw)
@@ -162,16 +162,16 @@ def run_diacam_lab():
                             summary_for_groq += info + "\n"
 
                             with st.expander(f"Chi tiết cho: {kw}"):
-                                st.write(f"Tìm thấy **{stats['count']}** loại phù hợp.")
+                                st.write(f"Detected **{stats['count']}** .")
                                 st.write(
-                                    f"🔥 Calories: Thấp nhất **{stats['min_cal']:.0f}** | Cao nhất **{stats['max_cal']:.0f}** | TB **{stats['avg_cal']:.1f}**")
-                                st.write(f"🩸 Chỉ số GL TB: **{stats['avg_gl']:.1f}**")
+                                    f"🔥 Calories: minimum **{stats['min_cal']:.0f}** | maximum **{stats['max_cal']:.0f}** | average **{stats['avg_cal']:.1f}**")
+                                st.write(f"🩸 Average GL index: **{stats['avg_gl']:.1f}**")
                         else:
                             st.warning(f"Không tìm thấy dữ liệu cho: {kw}")
 
                 if summary_for_groq:
-                    with st.spinner("Bước 3: Groq đang đưa ra lời khuyên..."):
+                    with st.spinner("Step 3: Advice from doctor..."):
                         final_report = analyze_with_groq(client_groq, analysis_part, summary_for_groq)
                         st.divider()
-                        st.subheader("📝 Lời khuyên từ chuyên gia (Groq AI)")
+                        st.subheader("📝 Conclusion")
                         st.info(final_report)
