@@ -89,7 +89,7 @@ LANGUAGES = {
         "login_confirm": "Confirm Login",
         "logout_btn": "Logout",
         "no_account": "Don't have an account?",
-        "create_account": "Create new account"
+        "create_account": "Create new account",
         "tab4": "📸 Food Check" # Thêm dòng này
     }
 }
