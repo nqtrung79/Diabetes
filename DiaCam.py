@@ -91,8 +91,9 @@ def analyze_with_groq(client_groq, ai_analysis, summary_data):
 # --- HÀM CHÍNH ĐỂ APP.PY GỌI ---
 
 def run_diacam_lab():
-    st.subheader("🛡️ Research Factory - Phân tích USDA 50-Samples")
-
+    st.subheader("📸 Food Intelligence: Calorie & GL Check")
+    st.markdown("##### *AI-Powered Glycemic Load analysis for diabetic-safe meal decisions.*")
+    
     # --- THÊM LẠI ĐOẠN NÀY NẾU ANH MUỐN ---
     try:
         df_dict = pd.read_csv("usda_food_dictionary_clean.csv")
