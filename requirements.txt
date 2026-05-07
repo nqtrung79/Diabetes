@@ -3,5 +3,6 @@ pandas
 plotly
 pymongo
 google-generativeai
+google-genai
 requests
 groq
