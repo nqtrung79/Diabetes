@@ -90,7 +90,7 @@ LANGUAGES = {
         "logout_btn": "Logout",
         "no_account": "Don't have an account?",
         "create_account": "Create new account"
-        "tab4": "📸 Food Check", # Thêm dòng này
+        "tab4": "📸 Food Check" # Thêm dòng này
     }
 }
 
