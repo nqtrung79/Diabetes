@@ -92,12 +92,11 @@ def analyze_with_groq(client_groq, ai_analysis, summary_data):
 
 def run_diacam_lab():
     st.subheader("📸 Food Intelligence: Calorie & GL Check")
-    st.markdown("##### *AI-Powered Glycemic Load analysis for diabetic-safe meal decisions.*")
-    
+
     # --- THÊM LẠI ĐOẠN NÀY NẾU ANH MUỐN ---
     try:
         df_dict = pd.read_csv("usda_food_dictionary_clean.csv")
-        st.success(f"📚 Từ điển hỗ trợ: {len(df_dict)} món ăn")
+        st.success(f"📚 AI-Powered Glycemic Load Analysis** integrated with **{count_foods:,}** USDA-standard food items for diabetic-safe decisions.")
     except:
         st.warning("⚠️ Không tìm thấy file usda_food_dictionary_clean.csv")
     # --------------------------------------
