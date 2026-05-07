@@ -231,7 +231,7 @@ if st.session_state.get('step') == "DANG_KY_FORM":
 else:
     st.title(L["title"])  # CHỈ GIỮ LẠI MỘT DÒNG TITLE DUY NHẤT Ở ĐÂY
 
-    tab_explorer, tab_recommend, tab_about = st.tabs([L["tab1"], L["tab4"], L["tab2"], L["tab3"]])
+    tab_explorer, tab_foodcheck, tab_recommend, tab_about = st.tabs([L["tab1"], L["tab4"], L["tab2"], L["tab3"]])
 
     # --- TAB 1: EXPLORER ---
     with tab_explorer:
