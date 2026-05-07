@@ -161,7 +161,7 @@ def run_diacam_lab():
                             info = f"- {kw}: Calo ({stats['min_cal']:.0f}-{stats['max_cal']:.0f}), TB: {stats['avg_cal']:.1f}; GL TB: {stats['avg_gl']:.1f}"
                             summary_for_groq += info + "\n"
 
-                            with st.expander(f"Chi tiết cho: {kw}"):
+                            with st.expander(f"Detail for: {kw}"):
                                 st.write(f"Detected **{stats['count']}** .")
                                 st.write(
                                     f"🔥 Calories: minimum **{stats['min_cal']:.0f}** | maximum **{stats['max_cal']:.0f}** | average **{stats['avg_cal']:.1f}**")
