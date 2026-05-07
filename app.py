@@ -9,6 +9,7 @@ import requests
 import streamlit as st
 import google.generativeai as genai
 from groq import Groq
+import DiaCam  # Nhập file DiaCam vào làm một module
 
 
 
@@ -55,7 +56,8 @@ LANGUAGES = {
         "login_confirm": "Xác nhận Đăng nhập",
         "logout_btn": "Đăng xuất",
         "no_account": "Bạn chưa có tài khoản?",
-        "create_account": "Tạo tài khoản mới"
+        "create_account": "Tạo tài khoản mới",
+        "tab4": "📸 Kiểm tra Thực phẩm" # Thêm dòng này
     },
     "English": {
         "title": "🛡️ Decoding Food, Defeating Diabetes",
@@ -88,6 +90,7 @@ LANGUAGES = {
         "logout_btn": "Logout",
         "no_account": "Don't have an account?",
         "create_account": "Create new account"
+        "tab4": "📸 Food Check", # Thêm dòng này
     }
 }
 
@@ -180,16 +183,6 @@ def get_raw_nutrients(fdc_id):
     return pd.DataFrame(
         [{"Nutrient": r['details']['name'], "Amount": r['amount'], "Unit": r['details']['unit_name']} for r in results])
 
-
-# --- 6. SIDEBAR VỚI LÁ CỜ ---
-# with st.sidebar:
-    # st.title("🌐 Language")
-    # c1, c2 = st.columns(2)
-    # if c1.button("Tiếng Việt"): st.session_state.lang = "Tiếng Việt"; st.rerun()
-    # if c2.button("English"): st.session_state.lang = "English"; st.rerun()
-    # st.divider()
-    # st.info(f"Phần mềm Nghiên cứu: {st.session_state.lang}")
-
 # --- 7. MÀN HÌNH ĐĂNG KÝ CHI TIẾT ---
 if st.session_state.get('step') == "DANG_KY_FORM":
     st.header("📝 " + L["register"])
@@ -238,7 +231,7 @@ if st.session_state.get('step') == "DANG_KY_FORM":
 else:
     st.title(L["title"])  # CHỈ GIỮ LẠI MỘT DÒNG TITLE DUY NHẤT Ở ĐÂY
 
-    tab_explorer, tab_recommend, tab_about = st.tabs([L["tab1"], L["tab2"], L["tab3"]])
+    tab_explorer, tab_recommend, tab_about = st.tabs([L["tab1"], L["tab4"], L["tab2"], L["tab3"]])
 
     # --- TAB 1: EXPLORER ---
     with tab_explorer:
@@ -356,7 +349,7 @@ else:
                     st.markdown(user_query)
 
             st.session_state.messages.append({"role": "user", "content": user_query})
-            
+
             # 2. Gọi API Groq
             with st.spinner("Đang kết nối với trí tuệ nhân tạo..."):
                 try:
@@ -408,6 +401,14 @@ else:
 
     # Lưu ý: Gọi hàm này ở cuối file chính của anh
     handle_ai_chat()
+
+
+    # --- TAB 4: FOOD CHECK (Tích hợp DiaCam vào đây) ---
+    with tab_foodcheck:
+        import DiaCam
+
+        DiaCam.run_diacam_lab()
+
 
     # --- TAB 2: ELITE FOODS LAB ---
     with tab_recommend:
