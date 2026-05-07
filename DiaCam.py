@@ -96,7 +96,7 @@ def run_diacam_lab():
     # --- THÊM LẠI ĐOẠN NÀY NẾU ANH MUỐN ---
     try:
         df_dict = pd.read_csv("usda_food_dictionary_clean.csv")
-        st.success(f"📚 AI-Powered Glycemic Load Analysis** integrated with **{count_foods:,}** USDA-standard food items for diabetic-safe decisions.")
+        st.success(f"📚 AI-Powered Glycemic Load Analysis** integrated with **{len(df_dict)}** USDA-standard food items for diabetic-safe decisions.")
     except:
         st.warning("⚠️ Không tìm thấy file usda_food_dictionary_clean.csv")
     # --------------------------------------
