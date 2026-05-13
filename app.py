@@ -94,6 +94,26 @@ LANGUAGES = {
     }
 }
 
+LANGUAGES["Tiếng Việt"].update({
+    "analyze_btn": "🚀 Phân tích món ăn",
+    "upload_label": "Tải ảnh món ăn của bạn lên đây",
+    "camera_label": "Chụp ảnh món ăn trực tiếp",
+    "should_eat": "✅ NÊN ĂN",
+    "should_limit": "⚠️ HẠN CHẾ",
+    "calories_est": "Ước tính Calorie",
+    "advice_doc": "👨‍⚕️ Lời khuyên chuyên gia"
+})
+
+LANGUAGES["English"].update({
+    "analyze_btn": "🚀 Analyze Meal",
+    "upload_label": "Upload your meal picture here",
+    "camera_label": "Take a picture of your meal",
+    "should_eat": "✅ RECOMMENDED",
+    "should_limit": "⚠️ LIMIT",
+    "calories_est": "Estimated Calories",
+    "advice_doc": "👨‍⚕️ Expert Advice"
+})
+
 # --- 3. CUSTOM CSS (Giữ nguyên thuật toán hiển thị của anh) ---
 st.markdown("""
 <style>
@@ -231,7 +251,7 @@ if st.session_state.get('step') == "DANG_KY_FORM":
 else:
     st.title(L["title"])  # CHỈ GIỮ LẠI MỘT DÒNG TITLE DUY NHẤT Ở ĐÂY
 
-    tab_explorer, tab_foodcheck, tab_recommend, tab_about = st.tabs([L["tab1"], L["tab4"], L["tab2"], L["tab3"]])
+    tab_explorer, tab_foodcheck, tab_recommend, tab_about = st.tabs([L["tab4"], L["tab1"], L["tab2"], L["tab3"]])
 
     # --- TAB 1: EXPLORER ---
     with tab_explorer:
